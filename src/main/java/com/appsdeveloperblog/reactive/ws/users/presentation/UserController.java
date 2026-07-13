@@ -15,15 +15,22 @@ import java.util.UUID;
 public class UserController {
 
     @PostMapping
+//    @ResponseStatus(HttpStatus.CREATED)
     public Mono<ResponseEntity<UserRest>> createUser(@RequestBody @Valid Mono<CreateUserRequest> createUserRequest) {
-        return createUserRequest.map(request -> new UserRest(UUID.randomUUID(),
-                request.getFirstName(),
-                request.getLastName(),
-                request.getEmail())
-        ).map(userRest -> ResponseEntity
-                .status(HttpStatus.CREATED)
-                .location(URI.create("/users/" + userRest.getId()))
-                .body(userRest));
+
+//        UserRest userRest = new UserRest();
+//        return Mono.just(userRest);
+
+        return createUserRequest
+                .map(requestObj -> new UserRest(UUID.randomUUID(),
+                            requestObj.getFirstName(),
+                            requestObj.getLastName(),
+                            requestObj.getEmail())
+                )
+                .map(userRest -> ResponseEntity
+                        .status(HttpStatus.CREATED)
+                        .location(URI.create("/users/" + userRest.getId()))
+                        .body(userRest));
     }
 
     @GetMapping("/{userId}")
@@ -37,8 +44,8 @@ public class UserController {
     }
 
     @GetMapping
-    public Flux<UserRest> getUsers(@RequestParam(value="offset", defaultValue="0") int offset,
-                                   @RequestParam(value="limit", defaultValue = "50") int limit) {
+    public Flux<UserRest> getUsers(@RequestParam(value = "offset", defaultValue = "0") int offset,
+                                   @RequestParam(value = "limit", defaultValue = "50") int limit) {
         return Flux.just(
                 new UserRest(UUID.randomUUID(), "Sergey", "Kargopolov", "test@test.com"),
                 new UserRest(UUID.randomUUID(), "Alice", "Smith", "alice@test.com"),

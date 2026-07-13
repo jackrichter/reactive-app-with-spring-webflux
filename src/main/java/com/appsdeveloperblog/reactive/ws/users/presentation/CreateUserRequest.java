@@ -4,6 +4,9 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+/**
+ * Class to hold the user details arriving to the REST API endpoint.
+ */
 public class CreateUserRequest {
 
     @NotBlank(message="First name cannot be empty")

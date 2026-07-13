@@ -2,21 +2,26 @@ package com.appsdeveloperblog.reactive.ws.users.presentation;
 
 import java.util.UUID;
 
+/**
+ * Class to hold user details we want to return to the client application.
+ */
 public class UserRest {
 
     private UUID id;
-    private String firstName;
+    private String firstNane;
     private String lastName;
     private String email;
+//    private String password;
 
     public UserRest() {
     }
 
-    public UserRest(UUID id, String firstName, String lastName, String email) {
+    public UserRest(UUID id, String firstNane, String lastName, String email/*, String password*/) {
         this.id = id;
-        this.firstName = firstName;
+        this.firstNane = firstNane;
         this.lastName = lastName;
         this.email = email;
+//        this.password = password;
     }
 
     public UUID getId() {
@@ -27,12 +32,12 @@ public class UserRest {
         this.id = id;
     }
 
-    public String getFirstName() {
-        return firstName;
+    public String getFirstNane() {
+        return firstNane;
     }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
+    public void setFirstNane(String firstNane) {
+        this.firstNane = firstNane;
     }
 
     public String getLastName() {
@@ -50,4 +55,12 @@ public class UserRest {
     public void setEmail(String email) {
         this.email = email;
     }
+
+//    public String getPassword() {
+//        return password;
+//    }
+//
+//    public void setPassword(String password) {
+//        this.password = password;
+//    }
 }
