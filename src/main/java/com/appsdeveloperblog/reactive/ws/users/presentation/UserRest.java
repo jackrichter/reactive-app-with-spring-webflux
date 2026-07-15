@@ -8,7 +8,7 @@ import java.util.UUID;
 public class UserRest {
 
     private UUID id;
-    private String firstNane;
+    private String firstName;
     private String lastName;
     private String email;
 //    private String password;
@@ -18,7 +18,7 @@ public class UserRest {
 
     public UserRest(UUID id, String firstNane, String lastName, String email/*, String password*/) {
         this.id = id;
-        this.firstNane = firstNane;
+        this.firstName = firstNane;
         this.lastName = lastName;
         this.email = email;
 //        this.password = password;
@@ -32,12 +32,12 @@ public class UserRest {
         this.id = id;
     }
 
-    public String getFirstNane() {
-        return firstNane;
+    public String getFirstName() {
+        return firstName;
     }
 
-    public void setFirstNane(String firstNane) {
-        this.firstNane = firstNane;
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
     }
 
     public String getLastName() {
