@@ -2,22 +2,20 @@ package com.appsdeveloperblog.reactive.ws.users.service;
 
 import com.appsdeveloperblog.reactive.ws.users.data.UserEntity;
 import com.appsdeveloperblog.reactive.ws.users.data.UserRepository;
-import com.appsdeveloperblog.reactive.ws.users.presentation.CreateUserRequest;
-import com.appsdeveloperblog.reactive.ws.users.presentation.UserRest;
+import com.appsdeveloperblog.reactive.ws.users.presentation.model.CreateUserRequest;
+import com.appsdeveloperblog.reactive.ws.users.presentation.model.UserRest;
 import org.springframework.beans.BeanUtils;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
 @Service
@@ -111,5 +109,22 @@ public class UserServiceImpl implements UserService {
         BeanUtils.copyProperties(userEntity, userRest);
 
         return userRest;
+    }
+
+    /**
+     * Spring Security will call this method when it needs to authenticate the user trying to log in.
+     * @param username the username to look up. This username is taken from the login REST API endpoint by Spring Security.
+     * @return
+     */
+    @Override
+    public Mono<UserDetails> findByUsername(String username) {
+
+        // Read and return the User Details stored in the database
+        return userRepository.findByEmail(username)
+                .map(userEntity -> User       // Spring Security’s internal representation for User's authentication
+                        .withUsername(userEntity.getEmail())
+                        .password(userEntity.getPassword())
+                        .authorities(new ArrayList<>())
+                        .build());
     }
 }
