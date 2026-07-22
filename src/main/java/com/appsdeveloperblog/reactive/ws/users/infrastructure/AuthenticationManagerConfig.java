@@ -8,7 +8,7 @@ import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
- * This component is responsible for validating an Authentication request.
+ * This component is responsible for validating an Authentication request through its authenticate method.
  * It performs the actual authentication by comparing the provided password with the stored encrypted password.
  */
 @Configuration
