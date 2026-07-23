@@ -22,10 +22,12 @@ public class AuthenticationController {
     public Mono<ResponseEntity<Void>> login(@RequestBody Mono<AuthenticationRequest> authenticationRequestMono) {
         return authenticationRequestMono
                 .flatMap(authRequestObject -> authenticationService
-                        .authenticate(authRequestObject.getEmail(), authRequestObject.getPassword())
+                        .authenticate(authRequestObject.getEmail(),
+                                authRequestObject.getPassword()))
                         .map(authResponseMap -> ResponseEntity.ok()
-                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + authResponseMap.get("token"))
+                                .header(HttpHeaders.AUTHORIZATION,
+                                        "Bearer " + authResponseMap.get("token"))
                                 .header("UserId" + authResponseMap.get("userId"))
-                                .build()));
+                                .build());
     }
 }
