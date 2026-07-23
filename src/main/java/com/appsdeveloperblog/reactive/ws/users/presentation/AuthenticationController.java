@@ -27,7 +27,8 @@ public class AuthenticationController {
                         .map(authResponseMap -> ResponseEntity.ok()
                                 .header(HttpHeaders.AUTHORIZATION,
                                         "Bearer " + authResponseMap.get("token"))
-                                .header("UserId" + authResponseMap.get("userId"))
+//                                .header("UserId" + authResponseMap.get("userId")) // Not working in Postman as header
+                                .header(HttpHeaders.FROM, authResponseMap.get("userId"))
                                 .build());
     }
 }
