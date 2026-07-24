@@ -2,6 +2,7 @@ package com.appsdeveloperblog.reactive.ws.users.infrastructure;
 
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -35,7 +36,7 @@ public class GlobalExceptionHandler {
         );
     }
 
-    // Catch Validation errors (through WebExchangeBindException which is thrown upon validation violations)
+    // Catch Validation errors (through WebExchangeBindException, which is thrown upon validation violations)
     @ExceptionHandler(WebExchangeBindException.class)
     public Mono<ErrorResponse> handleWebExchangeBindException(WebExchangeBindException exception) {
 
@@ -50,6 +51,16 @@ public class GlobalExceptionHandler {
                         exception,
                         HttpStatus.BAD_REQUEST,
                         errorMessage
+                ).build()
+        );
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public Mono<ErrorResponse> handleBadCredentialsException(BadCredentialsException exception) {
+        return Mono.just(ErrorResponse.builder(
+                exception,
+                HttpStatus.UNAUTHORIZED,
+                exception.getMessage()
                 ).build()
         );
     }

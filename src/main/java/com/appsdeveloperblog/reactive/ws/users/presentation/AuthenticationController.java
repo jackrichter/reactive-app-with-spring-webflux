@@ -31,11 +31,11 @@ public class AuthenticationController {
                                         "Bearer " + authResponseMap.get("token"))
 //                                .header("UserId" + authResponseMap.get("userId")) // Not working in Postman as header
                                 .header(HttpHeaders.FROM, authResponseMap.get("userId"))
-                                .build())
-                .onErrorReturn(BadCredentialsException.class,
-                        ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Credentials"))
-                .onErrorReturn(Exception.class,
-                        ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                                 .build());
+//                .onErrorReturn(BadCredentialsException.class,
+//                        ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid Credentials"))
+//                .onErrorReturn(Exception.class,
+//                        ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//                                .build());
     }
 }
