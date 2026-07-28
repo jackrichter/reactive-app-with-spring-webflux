@@ -51,6 +51,16 @@ public class JwtServiceImpl implements JwtService {
                 .onErrorReturn(false);
     }
 
+    @Override
+    public String extractTokenSubject(String token) {
+        return parseToken(token).getSubject();
+    }
+
+    /**
+     * Parse the JWT token and return the extracted Claims
+     * @param token
+     * @return
+     */
     private Claims parseToken(String token) {
         return Jwts
                 .parser()
