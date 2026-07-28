@@ -1,14 +1,17 @@
 package com.appsdeveloperblog.reactive.ws.users.infrastructure;
 
+import com.appsdeveloperblog.reactive.ws.users.service.JwtService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -16,7 +19,10 @@ public class WebSecurity {
 
     @Bean
     public SecurityWebFilterChain httpSecurityFilterChain(ServerHttpSecurity http,
-                                                          ReactiveAuthenticationManager authenticationManager) {
+                                                          ReactiveAuthenticationManager authenticationManager,
+                                                          JwtService jwtService) {
+
+        JwtAuthenticationFilter jwtAuthenticationFilter = new JwtAuthenticationFilter(jwtService);
 
         return http
                 .authorizeExchange(exchanges -> exchanges
@@ -25,8 +31,10 @@ public class WebSecurity {
                         .anyExchange()
                         .authenticated())
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)   // Disable Basic Authentication
+                .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)   // Disable Basic Authentication.
                 .authenticationManager(authenticationManager)           // Register which AuthenticationManager to use to check user credentials.
+                .addFilterAt(jwtAuthenticationFilter, SecurityWebFiltersOrder.AUTHENTICATION)   // Add JWT Filter to the chain at position 'AUTHENTICATION'.
+                .securityContextRepository(NoOpServerSecurityContextRepository.getInstance())   // Make application stateless, thus improving scalability.
                 .build();
     }
 
