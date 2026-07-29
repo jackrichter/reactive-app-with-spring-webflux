@@ -1,7 +1,7 @@
 package com.appsdeveloperblog.reactive.ws.users.presentation.model;
 
 /**
- * Class to accept a User's identifiers like email(used as userName) and password for that user's logging purpose.
+ * Class to accept a User's identifiers like email (used as userName) and password for that user's logging purpose.
  */
 public class AuthenticationRequest {
 
