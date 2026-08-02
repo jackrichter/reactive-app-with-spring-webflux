@@ -5,6 +5,7 @@ import com.appsdeveloperblog.reactive.ws.users.presentation.model.UserRest;
 import com.appsdeveloperblog.reactive.ws.users.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,6 +14,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
+import java.time.Duration;
 import java.util.UUID;
 
 @RestController
@@ -76,5 +78,15 @@ public class UserController {
 //        );
 
         return userService.findAll(page, limit);
+    }
+
+    /**
+     * Server-Sent Events (SSE) example.
+     * MediaType.TEXT_EVENT_STREAM_VALUE is very important!
+     */
+    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<String> streamUsers() {
+        return Flux.interval(Duration.ofSeconds(1))
+                .map(sequence -> "Server-Sent Event: " + sequence);     // A String
     }
 }
