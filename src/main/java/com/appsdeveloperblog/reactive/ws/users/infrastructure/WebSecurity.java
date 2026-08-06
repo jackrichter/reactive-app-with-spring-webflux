@@ -13,6 +13,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.reactive.CorsConfigurationSource;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
 
 @Configuration
 @EnableWebFluxSecurity
@@ -33,6 +38,7 @@ public class WebSecurity {
                         .pathMatchers(HttpMethod.GET, "/users/stream").permitAll()
                         .anyExchange()
                         .authenticated())
+                .cors(corsSpec -> corsSpec.configurationSource(corsConfigurationSource()))
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)   // Disable Basic Authentication.
                 .authenticationManager(authenticationManager)           // Register which AuthenticationManager to use to check user credentials.
@@ -44,6 +50,24 @@ public class WebSecurity {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    /**
+     * Cross-Origin Resource Sharing (CORS).
+     * This is a relevant specification with the emergence of HTML5 and JS clients that consume data via REST APIs.
+     * CORS enables cross-domain communication.
+     * For this application the CorsConfigurationSource has to come from the Spring Reactive package.
+     */
+    private CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList("*"));
+        configuration.setAllowedMethods(Arrays.asList("*"));        // Allowed HTTP methods
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+
+        // Apply this CORS configuration to all URL paths and return it
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();     // In our case, this has to come from the Spring Reactive package.
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 
     /**
