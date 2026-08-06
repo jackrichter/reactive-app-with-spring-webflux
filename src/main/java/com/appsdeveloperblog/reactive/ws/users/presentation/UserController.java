@@ -85,8 +85,10 @@ public class UserController {
      * MediaType.TEXT_EVENT_STREAM_VALUE is very important!
      */
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> streamUsers() {
-        return Flux.interval(Duration.ofSeconds(1))
-                .map(sequence -> "Server-Sent Event: " + sequence);     // A String
+    public Flux<UserRest> streamUsers() {
+        return userService.streamUser();
+
+//        return Flux.interval(Duration.ofSeconds(1))
+//                .map(sequence -> "Server-Sent Event: " + sequence);     // A String
     }
 }

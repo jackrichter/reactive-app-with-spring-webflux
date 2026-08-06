@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Sinks;
 import reactor.core.scheduler.Schedulers;
 
 import java.util.ArrayList;
@@ -23,10 +24,12 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final Sinks.Many<UserRest> userSink;
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, Sinks.Many<UserRest> userSink) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.userSink = userSink;
     }
 
     @Override
@@ -45,10 +48,13 @@ public class UserServiceImpl implements UserService {
         return createUserRequestMono
 //                .mapNotNull(this::convertToUserEntity)
                 .flatMap(this::convertToUserEntity)
-                // mapNotNull returns Mono and ConvertToUserEntity also returns Mono
+                // mapNotNull returns Mono, and ConvertToUserEntity also returns Mono
                 // -> Mono of Mono -> Nested Mono -> Needs flattening -> Use flatMap!
                 .flatMap(userRepository::save)
-                .mapNotNull(this::convertToUserRest);
+                .mapNotNull(this::convertToUserRest)
+                // Publish created user event to all subscribers (SSE) of the Sink
+                .doOnSuccess(savedUserRest -> userSink.tryEmitNext(savedUserRest)); // Runs when a Mono runs successfully
+
 
                 /* Reactive Exception Handling locally to this method only */
 
@@ -64,8 +70,8 @@ public class UserServiceImpl implements UserService {
 //                    } else if(throwable instanceof DataIntegrityViolationException) {
 //                        return new ResponseStatusException(HttpStatus.BAD_REQUEST, throwable.getMessage());
 //                    } else {
-////                        return throwable;
-//                        return  new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, throwable.getMessage());
+//                        // return throwable;
+//                        return new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, throwable.getMessage());
 //                    }
 //                });
 
@@ -89,6 +95,15 @@ public class UserServiceImpl implements UserService {
 
         return userRepository.findAllBy(pageable)
                 .map(userEntity -> convertToUserRest(userEntity));
+    }
+
+    @Override
+    public Flux<UserRest> streamUser() {
+        // Return a Flux that can transmit a (or many) userRest object(s)
+        return userSink.asFlux()
+                // Behavior of how a client behaves when it connects and disconnects
+                .publish()     // This turns the Flux into a 'Hot Source' that can have multiple subscribers and emit items to all of them at the same time.
+                .autoConnect(1); // Starts emitting stream data immediately if there is at least one subscriber. Helps with reconnecting.
     }
 
     private Mono<UserEntity> convertToUserEntity(CreateUserRequest createUserRequest) {
