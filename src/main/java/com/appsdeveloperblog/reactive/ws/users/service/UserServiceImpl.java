@@ -2,6 +2,7 @@ package com.appsdeveloperblog.reactive.ws.users.service;
 
 import com.appsdeveloperblog.reactive.ws.users.data.UserEntity;
 import com.appsdeveloperblog.reactive.ws.users.data.UserRepository;
+import com.appsdeveloperblog.reactive.ws.users.presentation.model.AlbumRest;
 import com.appsdeveloperblog.reactive.ws.users.presentation.model.CreateUserRequest;
 import com.appsdeveloperblog.reactive.ws.users.presentation.model.UserRest;
 import org.springframework.beans.BeanUtils;
@@ -11,6 +12,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
@@ -25,11 +27,14 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final Sinks.Many<UserRest> userSink;
+    private final WebClient webClient;
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, Sinks.Many<UserRest> userSink) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder,
+                           Sinks.Many<UserRest> userSink, WebClient webClient) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.userSink = userSink;
+        this.webClient = webClient;
     }
 
     @Override
@@ -79,10 +84,17 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Mono<UserRest> getUserById(UUID id) {
+    public Mono<UserRest> getUserById(UUID id, String include) {
 
         return userRepository.findById(id)
-                .mapNotNull(userEntity -> convertToUserRest(userEntity));
+                .mapNotNull(userEntity -> convertToUserRest(userEntity))
+                .flatMap(user -> {
+                    if (include != null && include.equals("albums")) {
+                        // Fetch user's photo albums and add them to the user object
+                        return includeUserAlbums(user);
+                    }
+                    return Mono.just(user);     // We need to wrap it into Mono because the return type is Mono<UserRest>!!!
+                });
     }
 
     @Override
@@ -141,5 +153,21 @@ public class UserServiceImpl implements UserService {
                         .password(userEntity.getPassword())
                         .authorities(new ArrayList<>())
                         .build());
+    }
+
+    private Mono<UserRest> includeUserAlbums(UserRest user) {
+        return webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                        .port(8084)
+                        .path("/albums")
+                        .queryParam("userId",user.getId())
+                        .build())
+                .retrieve()         // It is used to start HTTP request and retrieve the response body, including statusor errors
+                .bodyToFlux(AlbumRest.class)      // We can get in response more than one album. This will convert the response into a Flux of AlbumRest objects
+                .collectList()                    // Transforms the Flux into a Mono of List<AlbumRest>
+                .map(albums -> {
+                    user.setAlbums(albums);
+                    return user;
+                });
     }
 }
