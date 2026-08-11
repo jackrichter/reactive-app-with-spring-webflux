@@ -5,9 +5,12 @@ import com.appsdeveloperblog.reactive.ws.users.data.UserRepository;
 import com.appsdeveloperblog.reactive.ws.users.presentation.model.AlbumRest;
 import com.appsdeveloperblog.reactive.ws.users.presentation.model.CreateUserRequest;
 import com.appsdeveloperblog.reactive.ws.users.presentation.model.UserRest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,6 +31,7 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final Sinks.Many<UserRest> userSink;
     private final WebClient webClient;
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder,
                            Sinks.Many<UserRest> userSink, WebClient webClient) {
@@ -163,12 +167,22 @@ public class UserServiceImpl implements UserService {
                         .queryParam("userId",user.getId())
                         .build())
                 .header("Authorization", jwt)       // The Album Microservice demands JWT Authorization
-                .retrieve()         // It is used to start HTTP request and retrieve the response body, including statusor errors
+                .retrieve()         // It is used to start HTTP request and retrieve the response body, including status errors
+                .onStatus(HttpStatusCode::is4xxClientError, response -> {
+                    return Mono.error(new RuntimeException("Albums not found for this user"));
+                })
+                .onStatus(HttpStatusCode::is5xxServerError, response -> {
+                    return Mono.error(new RuntimeException("Server error while fetching albums"));
+                })
                 .bodyToFlux(AlbumRest.class)      // We can get in response more than one album. This will convert the response into a Flux of AlbumRest objects
                 .collectList()                    // Transforms the Flux into a Mono of List<AlbumRest>
                 .map(albums -> {
                     user.setAlbums(albums);
                     return user;
+                })
+                .onErrorResume(e -> {
+                    logger.error("Error fetching albums: ", e);
+                    return Mono.just(user);
                 });
     }
 }
