@@ -57,14 +57,15 @@ public class UserController {
     // The returnObject is of type ResponseEntity, which has a body property and because the ResponseEntity wraps 'UserRest', it can get the id
     @PostAuthorize("returnObject.body != null and (returnObject.body.id.toString().equals(authentication.principal))")
     public Mono<ResponseEntity<UserRest>> getUser(@PathVariable("userId") UUID userId,
-                                                  @RequestParam(name = "include", required = false) String include) {
+                                                  @RequestParam(name = "include", required = false) String include,
+                                                  @RequestHeader(name = "Authorization") String jwt) {
 //        return Mono.just(new UserRest(
 //                userId,
 //                "Sergey",
 //                "Kargopolov",
 //                "test@test.com"));
 
-        return userService.getUserById(userId, include)
+        return userService.getUserById(userId, include, jwt)
                 .map(userRest -> ResponseEntity.status(HttpStatus.OK).body(userRest))
                 .switchIfEmpty(Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).build()));
     }

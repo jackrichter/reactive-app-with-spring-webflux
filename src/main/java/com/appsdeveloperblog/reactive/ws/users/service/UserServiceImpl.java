@@ -84,14 +84,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Mono<UserRest> getUserById(UUID id, String include) {
+    public Mono<UserRest> getUserById(UUID id, String include, String jwt) {
 
         return userRepository.findById(id)
                 .mapNotNull(userEntity -> convertToUserRest(userEntity))
                 .flatMap(user -> {
                     if (include != null && include.equals("albums")) {
                         // Fetch user's photo albums and add them to the user object
-                        return includeUserAlbums(user);
+                        return includeUserAlbums(user, jwt);
                     }
                     return Mono.just(user);     // We need to wrap it into Mono because the return type is Mono<UserRest>!!!
                 });
@@ -155,13 +155,14 @@ public class UserServiceImpl implements UserService {
                         .build());
     }
 
-    private Mono<UserRest> includeUserAlbums(UserRest user) {
+    private Mono<UserRest> includeUserAlbums(UserRest user, String jwt) {
         return webClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .port(8084)
                         .path("/albums")
                         .queryParam("userId",user.getId())
                         .build())
+                .header("Authorization", jwt)       // The Album Microservice demands JWT Authorization
                 .retrieve()         // It is used to start HTTP request and retrieve the response body, including statusor errors
                 .bodyToFlux(AlbumRest.class)      // We can get in response more than one album. This will convert the response into a Flux of AlbumRest objects
                 .collectList()                    // Transforms the Flux into a Mono of List<AlbumRest>
