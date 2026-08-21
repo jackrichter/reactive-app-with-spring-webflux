@@ -76,4 +76,28 @@ class UserControllerTest {
         // then
         verify(userService, times(1)).createUser(Mockito.<Mono<CreateUserRequest>>any());
     }
+
+    @Test
+    public void testCreateUser_withInvalidRequest_returnsBadRequestStatus() {
+
+        // given
+        CreateUserRequest invalidRequest = new CreateUserRequest(
+                "Sergey",
+                "Kargopolov",
+                "user@example.com",
+                "123"                       // Password is too short
+        );
+
+        // when
+        webTestClient
+                .post()
+                .uri("/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(invalidRequest)
+                .exchange()
+                .expectStatus().isBadRequest();
+
+        // then
+        verify(userService, never()).createUser(Mockito.<Mono<CreateUserRequest>>any());
+    }
 }

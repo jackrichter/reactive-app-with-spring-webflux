@@ -29,7 +29,7 @@ public class UserController {
 
     @PostMapping
 //    @ResponseStatus(HttpStatus.CREATED)
-    public Mono<ResponseEntity<UserRest>> createUser(@RequestBody @Valid Mono<CreateUserRequest> createUserRequest) {
+    public Mono<ResponseEntity<UserRest>> createUser(@RequestBody @Valid CreateUserRequest createUserRequest) {
 
 //        UserRest userRest = new UserRest();
 //        return Mono.just(userRest);
@@ -45,7 +45,7 @@ public class UserController {
 //                        .location(URI.create("/users/" + userRest.getId()))
 //                        .body(userRest));
 
-        return userService.createUser(createUserRequest)
+        return userService.createUser(Mono.just(createUserRequest))     // Putting Mono here so that Validation works!
                 .map(userRest -> ResponseEntity
                         .status(HttpStatus.CREATED)
                         .location(URI.create("/users/" + userRest.getId()))
