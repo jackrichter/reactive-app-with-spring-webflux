@@ -100,4 +100,52 @@ class UserControllerTest {
         // then
         verify(userService, never()).createUser(Mockito.<Mono<CreateUserRequest>>any());
     }
+
+    @Test
+    public void testCreateUser_withEmptyFirstName_returnsBadRequestStatus() {
+
+        // given
+        CreateUserRequest invalidRequest = new CreateUserRequest(
+                "",             // Empty firstName
+                "Kargopolov",
+                "user@example.com",
+                "123456789"
+        );
+
+        // when
+        webTestClient
+                .post()
+                .uri("/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(invalidRequest)
+                .exchange()
+                .expectStatus().isBadRequest();
+
+        // then
+        verify(userService, never()).createUser(any());
+    }
+
+    @Test
+    public void testCreateUser_withLastNameTooShort_returnsBadRequestStatus() {
+
+        // given
+        CreateUserRequest invalidRequest = new CreateUserRequest(
+                "Sergey",
+                "K",                // lastName is too short
+                "user@example.com",
+                "123456789"
+        );
+
+        // when
+        webTestClient
+                .post()
+                .uri("/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(invalidRequest)
+                .exchange()
+                .expectStatus().isBadRequest();
+
+        // then
+        verify(userService, never()).createUser(any());
+    }
 }
