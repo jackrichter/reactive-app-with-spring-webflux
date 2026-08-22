@@ -9,6 +9,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -147,5 +148,36 @@ class UserControllerTest {
 
         // then
         verify(userService, never()).createUser(any());
+    }
+
+    @Test
+    public void testCreateUser_whenServiceThrowsException_returnsInternalServerError() {
+
+        // given
+        CreateUserRequest validRequest = new CreateUserRequest(
+                "Sergey",
+                "Kargopolov",
+                "user@example.com",
+                "123456789"
+        );
+
+        when(userService.createUser(any()))
+                .thenReturn(Mono.error(new RuntimeException("Service error")));
+
+        // when
+        webTestClient
+                .post()
+                .uri("/users")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(validRequest)
+                .exchange()
+                .expectStatus().isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR)
+                .expectBody()
+                .jsonPath("$.instance").isEqualTo("/users")
+                .jsonPath("$.status").isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .jsonPath("$.detail").isEqualTo("Service error");
+
+        // then
+        verify(userService, times(1)).createUser(any());
     }
 }
