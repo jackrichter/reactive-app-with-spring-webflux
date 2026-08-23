@@ -114,4 +114,33 @@ class UserServiceImplTest {
                         userRest.getEmail().equals(savedEntity.getEmail()))
                 .verifyComplete();
     }
+
+    @Test
+    public void testGetUserById_withExistingUser_returnsUserRestWithoutAlbumsInfo() {
+
+        // given - arrange
+        UUID userId = UUID.randomUUID();
+
+        UserEntity userEntity = new UserEntity();
+        userEntity.setId(userId);
+        userEntity.setFirstName("Sergey");
+        userEntity.setLastName("Kargopolov");
+        userEntity.setEmail("test@test.com");
+
+        when(userRepository.findById(userId)).thenReturn(Mono.just(userEntity));
+
+        // when - act
+        Mono<UserRest> result = userService.getUserById(userId, null, "jwtToken");
+
+        // then - assert and verify -> We use StepVerifier to check the UserRest object
+        StepVerifier.create(result)
+                .expectNextMatches(userRest -> userRest.getId().equals(userEntity.getId()) &&
+                        userRest.getFirstName().equals(userEntity.getFirstName()) &&
+                        userRest.getLastName().equals(userEntity.getLastName()) &&
+                        userRest.getEmail().equals(userEntity.getEmail()))
+                .verifyComplete();
+
+        verify(userRepository, times(1)).findById(userId);
+        verify(webClient, never()).get();
+    }
 }
