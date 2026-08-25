@@ -1,0 +1,64 @@
+package com.appsdeveloperblog.reactive.ws.users.data;
+
+import org.junit.jupiter.api.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.data.r2dbc.DataR2dbcTest;
+import org.springframework.r2dbc.core.DatabaseClient;
+import reactor.core.publisher.Flux;
+import reactor.test.StepVerifier;
+
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+@DataR2dbcTest
+@TestInstance( TestInstance.Lifecycle.PER_CLASS)        // Only one instance of this class is created for all tests
+class UserRepositoryTest {
+
+    @Autowired
+    private DatabaseClient databaseClient;
+
+    @BeforeAll          // Runs once before all tests
+    void setUp() {
+        UserEntity user1 = new UserEntity(UUID.randomUUID(),
+                "John",
+                "Doe",
+                "john.doe@example.com",
+                "123456789");
+
+        UserEntity user2 = new UserEntity(UUID.randomUUID(),
+                "Jane",
+                "Doe",
+                "jane.doe@example.com",
+                "123456789");
+
+        String insertSQL = "INSERT INTO users (id, first_name, last_name, email, password) VALUES (:id, " +
+                ":firstName, :lastName, :email, :password)";
+
+        Flux.just(user1, user2)
+                .concatMap(userEntity -> databaseClient.sql(insertSQL)      // Runs it sequentially but non-blocking
+                        .bind("id", userEntity.getId())
+                        .bind("firstName", userEntity.getFirstName())
+                        .bind("lastName", userEntity.getLastName())
+                        .bind("email", userEntity.getEmail())
+                        .bind("password", userEntity.getPassword())
+                        .fetch()            // Runs the SQL query in database
+                        .rowsUpdated()      // Returns the number of rows affected by the query
+                )
+                .then()                     // Makes the Reactive stream wait until all the inserts are completed
+                .as(StepVerifier::create)   // This converts the Reactive stream into a testable form
+                .verifyComplete();          // Checks that everything was su
+    }
+
+    @AfterAll           // Runs once after all tests
+    void tearDown() {
+        databaseClient.sql("TRUNCATE TABLE users")
+                .then()
+                .as(StepVerifier::create)
+                .verifyComplete();
+    }
+
+    @Test
+    void findByEmail() {
+    }
+}
