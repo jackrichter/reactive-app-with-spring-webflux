@@ -9,14 +9,15 @@ import reactor.test.StepVerifier;
 
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 @DataR2dbcTest
 @TestInstance( TestInstance.Lifecycle.PER_CLASS)        // Only one instance of this class is created for all tests
 class UserRepositoryTest {
 
     @Autowired
     private DatabaseClient databaseClient;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @BeforeAll          // Runs once before all tests
     void setUp() {
@@ -59,6 +60,14 @@ class UserRepositoryTest {
     }
 
     @Test
-    void findByEmail() {
+    void testFindByEmail_withValidEmail_returnsUserEntity() {
+
+        // given
+        String emailToFind = "john.doe@example.com";
+
+        // when and then
+        StepVerifier.create(userRepository.findByEmail(emailToFind))
+                .expectNextMatches(userEntity -> userEntity.getEmail().equals(emailToFind))
+                .verifyComplete();
     }
 }
