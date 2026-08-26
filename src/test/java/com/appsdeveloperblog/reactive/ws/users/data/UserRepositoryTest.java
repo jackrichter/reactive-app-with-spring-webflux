@@ -3,6 +3,7 @@ package com.appsdeveloperblog.reactive.ws.users.data;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.r2dbc.DataR2dbcTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.r2dbc.core.DatabaseClient;
@@ -107,6 +108,25 @@ class UserRepositoryTest {
         StepVerifier.create(userRepository.findAllBy(pageable))
                 .expectNextCount(0)
                 .expectComplete()
+                .verify();
+    }
+
+    @Test
+    public void testSave_withExistingEmail_shouldFail() {
+
+        // given
+        UserEntity invalidUser = new UserEntity(
+                null,
+                "Sergey",
+                "Kargopolov",
+                "jane.doe@example.com",         // Existing email
+                "password"
+        );
+
+        // when and then
+        userRepository.save(invalidUser)
+                .as(StepVerifier::create)   // Wraps the reactive operation in StepVerifier so we can test the expected behavior
+                .expectError(DataIntegrityViolationException.class)
                 .verify();
     }
 }
